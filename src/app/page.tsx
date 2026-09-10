@@ -18,7 +18,7 @@ export default function AuthPage() {
     const payload = isLogin ? { email, password } : { email, password, name };
 
     try {
-      const res = await fetch(`http://13.60.33.130:3001${endpoint}`, {
+      const res = await fetch(`https://my-chat-app29.duckdns.org/api${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -67,7 +67,7 @@ export default function ChatPage() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    const newSocket = io('http://13.60.33.130:3001', { auth: { token } });
+    const newSocket = io('https://my-chat-app29.duckdns.org', { auth: { token } });
     setSocket(newSocket);
 
     fetchRooms();
@@ -152,7 +152,7 @@ export default function ChatPage() {
   const fetchRooms = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://13.60.33.130:3001/api/chat/rooms', {
+      const res = await fetch('https://my-chat-app29.duckdns.org/api/chat/rooms', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -170,7 +170,7 @@ export default function ChatPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://13.60.33.130:3001/api/chat/rooms', {
+      const res = await fetch('https://my-chat-app29.duckdns.org/api/chat/rooms', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ export default function ChatPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `http://13.60.33.130:3001/api/chat/rooms/${roomId}/messages?limit=20`,
+        `https://my-chat-app29.duckdns.org/api/chat/rooms/${roomId}/messages?limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -225,7 +225,7 @@ export default function ChatPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `http://13.60.33.130:3001/api/chat/rooms/${currentRoom.id}/messages?cursor=${firstMessageId}&limit=20`,
+        `https://my-chat-app29.duckdns.org/api/chat/rooms/${currentRoom.id}/messages?cursor=${firstMessageId}&limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -318,86 +318,82 @@ export default function ChatPage() {
     }
   };
 
-// Edit Message Handler
-const handleSaveEdit = async (messageId: string) => {
-  if (!editingContent.trim() || !currentRoom?.id) return;
+  // Edit Message Handler
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editingContent.trim() || !currentRoom?.id) return;
 
-  try {
-    const token = localStorage.getItem('token');
-    const currentUserId = user?.id || localStorage.getItem('userId');
+    try {
+      const token = localStorage.getItem('token');
+      const currentUserId = user?.id || localStorage.getItem('userId');
 
-    const res = await fetch(`http://13.60.33.130:3001/api/chat/messages/${messageId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ 
-        content: editingContent,
-        userId: currentUserId,
-      }),
-    });
-
-    if (res.ok) {
-      const updatedMsg = await res.json();
-
-      // 1. Optimistically update local React state for sender
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) => (msg.id === messageId ? updatedMsg : msg))
-      );
-
-      // 2. Broadcast updated payload over Socket.io to other users in the room
-      socket?.emit('edit_message', {
-        roomId: currentRoom.id,
-        message: updatedMsg,
+      const res = await fetch(`https://my-chat-app29.duckdns.org/api/chat/messages/${messageId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          content: editingContent,
+          userId: currentUserId,
+        }),
       });
 
-      setEditingMessageId(null);
-      setEditingContent('');
-    } else {
-      console.error('Edit request failed with status:', res.status);
+      if (res.ok) {
+        const updatedMsg = await res.json();
+
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) => (msg.id === messageId ? updatedMsg : msg))
+        );
+
+        socket?.emit('edit_message', {
+          roomId: currentRoom.id,
+          message: updatedMsg,
+        });
+
+        setEditingMessageId(null);
+        setEditingContent('');
+      } else {
+        console.error('Edit request failed with status:', res.status);
+      }
+    } catch (err) {
+      console.error('Failed to edit message:', err);
     }
-  } catch (err) {
-    console.error('Failed to edit message:', err);
-  }
-};
+  };
 
-// Delete Message Handler
-const handleDeleteMessage = async (messageId: string) => {
-  if (!currentRoom?.id) return;
-  if (!confirm('Are you sure you want to delete this message?')) return;
+  // Delete Message Handler
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!currentRoom?.id) return;
+    if (!confirm('Are you sure you want to delete this message?')) return;
 
-  try {
-    const token = localStorage.getItem('token');
-    const currentUserId = user?.id || localStorage.getItem('userId');
+    try {
+      const token = localStorage.getItem('token');
+      const currentUserId = user?.id || localStorage.getItem('userId');
 
-    const res = await fetch(`http://13.60.33.130:3001/api/chat/messages/${messageId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ userId: currentUserId }),
-    });
-
-    if (res.ok) {
-      // 1. Optimistically update local React state for sender
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== messageId)
-      );
-
-      // 2. Broadcast deletion over Socket.io to other users in the room
-      socket?.emit('delete_message', {
-        roomId: currentRoom.id,
-        messageId,
+      const res = await fetch(`https://my-chat-app29.duckdns.org/api/chat/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: currentUserId }),
       });
-    } else {
-      console.error('Delete request failed with status:', res.status);
+
+      if (res.ok) {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== messageId)
+        );
+
+        socket?.emit('delete_message', {
+          roomId: currentRoom.id,
+          messageId,
+        });
+      } else {
+        console.error('Delete request failed with status:', res.status);
+      }
+    } catch (err) {
+      console.error('Failed to delete message:', err);
     }
-  } catch (err) {
-    console.error('Failed to delete message:', err);
-  }
-};
+  };
 
   // --- WEBRTC & MEDIA CONTROL METHODS ---
 

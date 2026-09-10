@@ -152,7 +152,7 @@ export default function ChatPage() {
   const fetchRooms = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('https://my-chat-app29.duckdns.org/api/chat/rooms', {
+      const res = await fetch('https://my-chat-app29.duckdns.org/api/api/chat/rooms', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -170,7 +170,7 @@ export default function ChatPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('https://my-chat-app29.duckdns.org/api/chat/rooms', {
+      const res = await fetch('https://my-chat-app29.duckdns.org/api/api/chat/rooms', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ export default function ChatPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `https://my-chat-app29.duckdns.org/api/chat/rooms/${roomId}/messages?limit=20`,
+        `https://my-chat-app29.duckdns.org/api/api/chat/rooms/${roomId}/messages?limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -225,7 +225,7 @@ export default function ChatPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `https://my-chat-app29.duckdns.org/api/chat/rooms/${currentRoom.id}/messages?cursor=${firstMessageId}&limit=20`,
+        `https://my-chat-app29.duckdns.org/api/apichat/rooms/${currentRoom.id}/messages?cursor=${firstMessageId}&limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -326,7 +326,7 @@ export default function ChatPage() {
       const token = localStorage.getItem('token');
       const currentUserId = user?.id || localStorage.getItem('userId');
 
-      const res = await fetch(`https://my-chat-app29.duckdns.org/api/chat/messages/${messageId}`, {
+      const res = await fetch(`https://my-chat-app29.duckdns.org/api/api/chat/messages/${messageId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -369,7 +369,7 @@ export default function ChatPage() {
       const token = localStorage.getItem('token');
       const currentUserId = user?.id || localStorage.getItem('userId');
 
-      const res = await fetch(`https://my-chat-app29.duckdns.org/api/chat/messages/${messageId}`, {
+      const res = await fetch(`https://my-chat-app29.duckdns.org/api/api/chat/messages/${messageId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

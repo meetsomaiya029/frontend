@@ -1,0 +1,13 @@
+{"timestamp":"00:00:28.897","source":"Server","level":"WARN","message":"⚠ Slow filesystem detected. The benchmark took 417ms. If \\\\?\\D:\\NESTJS_PROJECT\\chat-app-task\\frontend\\.next\\dev is a network drive, consider moving it to a local folder.\nSee more: https://nextjs.org/docs/app/guides/local-development"}
+{"timestamp":"00:00:48.949","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:52.197","source":"Server","level":"LOG","message":"○ Compiling / ..."}
+{"timestamp":"00:00:56.976","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:01:44.596","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:01:53.101","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:03:22.242","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:04:19.211","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:16:11.558","source":"Server","level":"LOG","message":"✓ Compiled in 27.5s"}
+{"timestamp":"00:16:12.395","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:28:12.211","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:32:44.928","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:34:53.879","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}

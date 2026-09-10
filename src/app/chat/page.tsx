@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, UIEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL } from '../../../config';
 
 const ICE_SERVERS = {
   iceServers: [
@@ -67,7 +68,7 @@ export default function ChatPage() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    const newSocket = io('https://my-chat-app29.duckdns.org', { auth: { token } });
+    const newSocket = io(API_BASE_URL, { auth: { token } });
     setSocket(newSocket);
 
     fetchRooms();
@@ -91,14 +92,17 @@ export default function ChatPage() {
       setRoomMembers(users);
     });
 
-    // WebRTC Signaling Listeners
-    newSocket.on('webrtc_offer', async ({ offer, senderName }) => {
+    // WebRTC Signaling Listeners (Fixed to prevent self-looping and handle room IDs correctly)
+    newSocket.on('webrtc_offer', async ({ offer, senderId, senderName, roomId }) => {
+      if (senderId === parsedUser?.id) return;
       if (senderName) setRemoteUserName(senderName);
-      await handleIncomingOffer(offer, newSocket);
+      await handleIncomingOffer(offer, newSocket, senderId, senderName, roomId);
     });
 
-    newSocket.on('webrtc_answer', async ({ answer, senderName }) => {
+    newSocket.on('webrtc_answer', async ({ answer, senderId, senderName }) => {
+      if (senderId === parsedUser?.id) return;
       if (senderName) setRemoteUserName(senderName);
+
       if (peerConnectionRef.current) {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
 
@@ -111,7 +115,9 @@ export default function ChatPage() {
       }
     });
 
-    newSocket.on('webrtc_ice_candidate', async ({ candidate }) => {
+    newSocket.on('webrtc_ice_candidate', async ({ candidate, senderId }) => {
+      if (senderId === parsedUser?.id) return;
+
       if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
         await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
       } else {
@@ -152,7 +158,7 @@ export default function ChatPage() {
   const fetchRooms = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('https://my-chat-app29.duckdns.org/api/api/chat/rooms', {
+      const res = await fetch(`${API_BASE_URL}/api/chat/rooms`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -170,7 +176,7 @@ export default function ChatPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('https://my-chat-app29.duckdns.org/api/api/chat/rooms', {
+      const res = await fetch(`${API_BASE_URL}/api/chat/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +199,7 @@ export default function ChatPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `https://my-chat-app29.duckdns.org/api/api/chat/rooms/${roomId}/messages?limit=20`,
+        `${API_BASE_URL}/api/chat/rooms/${roomId}/messages?limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -225,7 +231,7 @@ export default function ChatPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `https://my-chat-app29.duckdns.org/api/apichat/rooms/${currentRoom.id}/messages?cursor=${firstMessageId}&limit=20`,
+        `${API_BASE_URL}/api/chat/rooms/${currentRoom.id}/messages?cursor=${firstMessageId}&limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -326,7 +332,7 @@ export default function ChatPage() {
       const token = localStorage.getItem('token');
       const currentUserId = user?.id || localStorage.getItem('userId');
 
-      const res = await fetch(`https://my-chat-app29.duckdns.org/api/api/chat/messages/${messageId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/chat/messages/${messageId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -369,7 +375,7 @@ export default function ChatPage() {
       const token = localStorage.getItem('token');
       const currentUserId = user?.id || localStorage.getItem('userId');
 
-      const res = await fetch(`https://my-chat-app29.duckdns.org/api/api/chat/messages/${messageId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/chat/messages/${messageId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -417,15 +423,15 @@ export default function ChatPage() {
     }
   };
 
-  const initPeerConnection = (activeSocket: Socket) => {
+  const initPeerConnection = (activeSocket: Socket, targetRoomId: string) => {
     const pc = new RTCPeerConnection(ICE_SERVERS);
 
     pc.onicecandidate = (event) => {
-      if (event.candidate && currentRoom) {
+      if (event.candidate && targetRoomId) {
         activeSocket.emit('webrtc_ice_candidate', {
-          roomId: currentRoom.id,
+          roomId: targetRoomId,
           candidate: event.candidate,
-          senderId: user.id,
+          senderId: user?.id,
         });
       }
     };
@@ -441,7 +447,7 @@ export default function ChatPage() {
   };
 
   const startCall = async () => {
-    if (!socket || !currentRoom) return;
+    if (!socket || !currentRoom?.id) return;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -449,7 +455,7 @@ export default function ChatPage() {
 
       setIsInCall(true);
 
-      const pc = initPeerConnection(socket);
+      const pc = initPeerConnection(socket, currentRoom.id);
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       const offer = await pc.createOffer();
@@ -458,22 +464,28 @@ export default function ChatPage() {
       socket.emit('webrtc_offer', {
         roomId: currentRoom.id,
         offer,
-        senderId: user.id,
-        senderName: user.name,
+        senderId: user?.id,
+        senderName: user?.name,
       });
     } catch (err) {
       console.error('Failed to access media devices', err);
     }
   };
 
-  const handleIncomingOffer = async (offer: any, activeSocket: Socket) => {
+  const handleIncomingOffer = async (
+    offer: any,
+    activeSocket: Socket,
+    senderId: string,
+    senderName: string,
+    targetRoomId: string
+  ) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStreamRef.current = stream;
 
       setIsInCall(true);
 
-      const pc = initPeerConnection(activeSocket);
+      const pc = initPeerConnection(activeSocket, targetRoomId);
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -489,7 +501,7 @@ export default function ChatPage() {
       await pc.setLocalDescription(answer);
 
       activeSocket.emit('webrtc_answer', {
-        roomId: currentRoom?.id,
+        roomId: targetRoomId,
         answer,
         senderId: user?.id,
         senderName: user?.name,

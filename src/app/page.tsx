@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '../../config';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,7 +19,7 @@ export default function AuthPage() {
     const payload = isLogin ? { email, password } : { email, password, name };
 
     try {
-      const res = await fetch(`https://my-chat-app29.duckdns.org/api${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
